@@ -68,7 +68,11 @@ class FirebaseAuthService(private val context: Context) {
         }
 
         return try {
-            val webClientId = context.getString(R.string.default_web_client_id)
+            val webClientId = try {
+                context.getString(R.string.default_web_client_id)
+            } catch (_: Exception) {
+                "779512223094-64rmehd48oocma7o40mmtq0hvf15bf3u.apps.googleusercontent.com"
+            }
             val credentialManager = CredentialManager.create(activityContext)
 
             val googleIdOption = GetSignInWithGoogleOption.Builder(webClientId)
@@ -118,7 +122,7 @@ class FirebaseAuthService(private val context: Context) {
 suspend fun <T> Task<T>.awaitTask(): T =
     suspendCancellableCoroutine { continuation ->
         addOnSuccessListener { result ->
-            continuation.resume(result, null)
+            continuation.resume(result) { /* cancelled */ }
         }
         addOnFailureListener { exception ->
             continuation.resumeWith(Result.failure(exception))

@@ -64,7 +64,38 @@ jobs:
           mkdir -p app
           if [ ! -f "app/google-services.json" ]; then
             echo "Creando app/google-services.json para com.aistudio.vegas50k.vgtrak..."
-            echo '{"project_info":{"project_number":"121910575604","project_id":"vegas-50k-app"},"client":[{"client_info":{"mobilesdk_app_id":"1:121910575604:android:7d8a9e0f1b2c3d4e5f6a","android_client_info":{"package_name":"com.aistudio.vegas50k.vgtrak"}},"oauth_client":[],"api_key":[{"current_key":"AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q"}],"services":{}}],"configuration_version":"1"}' > app/google-services.json
+            cat << 'EOF' > app/google-services.json
+          {
+            "project_info": {
+              "project_number": "779512223094",
+              "project_id": "civic-polymer-384419",
+              "storage_bucket": "civic-polymer-384419.firebasestorage.app"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:779512223094:android:561e91a7c37a0b42df1657",
+                  "android_client_info": {
+                    "package_name": "com.aistudio.vegas50k.vgtrak"
+                  }
+                },
+                "oauth_client": [
+                  {
+                    "client_id": "779512223094-64rmehd48oocma7o40mmtq0hvf15bf3u.apps.googleusercontent.com",
+                    "client_type": 3
+                  }
+                ],
+                "api_key": [
+                  {
+                    "current_key": "AIzaSyA808oIiCy9Q0GaULl24mpgb6YtCS0TElE"
+                  }
+                ],
+                "services": {}
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
           fi
 
       - name: Compilar APK Debug con Gradle
