@@ -100,10 +100,16 @@ class FirebaseAuthService(private val context: Context) {
             }
         } catch (e: GetCredentialCancellationException) {
             Log.w(TAG, "Inicio de sesión con Google cancelado por el usuario", e)
-            Result.failure(e)
+            Result.failure(Exception("Inicio de sesión cancelado"))
         } catch (e: Exception) {
             Log.e(TAG, "Error durante el inicio de sesión con Google", e)
-            Result.failure(e)
+            val rawMsg = e.localizedMessage ?: "Error de autenticación con Google"
+            val friendlyMsg = if (rawMsg.contains("reauth", ignoreCase = true) || rawMsg.contains("16")) {
+                "Error de autorización de cuenta Google [16]. La aplicación debe estar firmada con el certificado registrado en Firebase."
+            } else {
+                rawMsg
+            }
+            Result.failure(Exception(friendlyMsg, e))
         }
     }
 

@@ -51,21 +51,36 @@ jobs:
           chmod +x ./gradlew
           ls -la ./gradlew
 
-      - name: Proveer keystore de Release si falta
+      - name: Proveer keystore con certificado registrado en Firebase
         run: |
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
             echo "Decodificando keystore desde GitHub Secrets..."
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-upload-key.jks
-          elif [ ! -f "my-upload-key.jks" ]; then
-            echo "Generando my-upload-key.jks para firma de Release..."
+          elif [ -f "debug.keystore.base64" ]; then
+            echo "Restaurando keystore registrado en Firebase..."
+            base64 -d debug.keystore.base64 > debug.keystore
+            keytool -importkeystore \
+              -srckeystore debug.keystore -srcstorepass android -srcalias androiddebugkey \
+              -destkeystore my-upload-key.jks -deststorepass android -destalias upload -destkeypass android \
+              -noprompt
+          elif [ -f "debug.keystore" ]; then
+            echo "Importando clave desde debug.keystore..."
+            keytool -importkeystore \
+              -srckeystore debug.keystore -srcstorepass android -srcalias androiddebugkey \
+              -destkeystore my-upload-key.jks -deststorepass android -destalias upload -destkeypass android \
+              -noprompt
+          else
+            echo "Generando keystore..."
             keytool -genkey -v -keystore my-upload-key.jks \
-              -storepass "${{ secrets.STORE_PASSWORD || 'vegas50kpass' }}" \
+              -storepass android \
               -alias upload \
-              -keypass "${{ secrets.KEY_PASSWORD || 'vegas50kpass' }}" \
+              -keypass android \
               -keyalg RSA -keysize 2048 -validity 10000 \
               -dname "CN=Vegas 50k,O=Vegas50k,C=US"
           fi
           ls -la my-upload-key.jks
+          echo "SHA-1 del certificado firmado:"
+          keytool -list -v -keystore my-upload-key.jks -storepass "${{ secrets.STORE_PASSWORD || 'android' }}" -alias upload | grep "SHA1:" || true
 
       - name: Proveer google-services.json si falta
         run: |
@@ -109,8 +124,8 @@ jobs:
       - name: Compilar APK Release con Gradle
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD || 'vegas50kpass' }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'vegas50kpass' }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD || 'android' }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'android' }}
         run: ./gradlew assembleRelease -x lint -x test --stacktrace
 
       - name: Subir APK Release como artefacto descargable
