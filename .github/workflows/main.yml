@@ -14,6 +14,9 @@ jobs:
   build:
     name: Build Debug APK
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
 
     steps:
       - name: Checkout del repositorio
@@ -44,8 +47,17 @@ jobs:
             gradle wrapper
           fi
 
-          # 3. Dar permisos de ejecución
-          chmod +x gradlew
+          # 3. Dar permisos de ejecución explícitamente a ./gradlew
+          chmod +x ./gradlew
+          ls -la ./gradlew
+
+      - name: Proveer debug.keystore si falta
+        run: |
+          if [ ! -f "debug.keystore" ]; then
+            echo "debug.keystore no encontrado. Generándolo con keytool para signingConfig 'debugConfig'..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+          ls -la debug.keystore
 
       - name: Proveer google-services.json si falta
         run: |
