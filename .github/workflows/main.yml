@@ -26,15 +26,34 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Localizar o Generar gradlew
+        run: |
+          # 1. Si los archivos están dentro de una subcarpeta, moverlos a la raíz
+          if [ ! -f "gradlew" ]; then
+            FOUND=$(find . -maxdepth 3 -name "gradlew" -print -quit)
+            if [ -n "$FOUND" ]; then
+              SUBDIR=$(dirname "$FOUND")
+              echo "Proyecto detectado en subcarpeta: $SUBDIR. Moviendo a la raíz..."
+              cp -r "$SUBDIR"/* .
+            fi
+          fi
+
+          # 2. Si todavía no existe gradlew, generarlo automáticamente con Gradle
+          if [ ! -f "gradlew" ]; then
+            echo "gradlew no encontrado en el repositorio. Generándolo automáticamente..."
+            gradle wrapper
+          fi
+
+          # 3. Dar permisos de ejecución
+          chmod +x gradlew
+
       - name: Proveer google-services.json si falta
         run: |
           mkdir -p app
           if [ ! -f "app/google-services.json" ]; then
-            echo '{"project_info":{"project_number":"0000000000","project_id":"vegas-dummy"},"client":[{"client_info":{"mobilesdk_app_id":"1:0000000000:android:000000000000","android_client_info":{"package_name":"com.vegas50k"}},"oauth_client":[],"api_key":[{"current_key":"fake_key"}],"services":{}}],"configuration_version":"1"}' > app/google-services.json
+            echo "Creando app/google-services.json para com.aistudio.vegas50k.vgtrak..."
+            echo '{"project_info":{"project_number":"121910575604","project_id":"vegas-50k-app"},"client":[{"client_info":{"mobilesdk_app_id":"1:121910575604:android:7d8a9e0f1b2c3d4e5f6a","android_client_info":{"package_name":"com.aistudio.vegas50k.vgtrak"}},"oauth_client":[],"api_key":[{"current_key":"AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q"}],"services":{}}],"configuration_version":"1"}' > app/google-services.json
           fi
-
-      - name: Dar permisos de ejecución a gradlew
-        run: chmod +x gradlew
 
       - name: Compilar APK Debug con Gradle
         run: ./gradlew assembleDebug -x lint -x test --stacktrace
