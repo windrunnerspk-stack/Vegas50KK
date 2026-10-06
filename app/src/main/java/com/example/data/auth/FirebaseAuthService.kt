@@ -1,13 +1,26 @@
 package com.example.data.auth
 
 import android.content.Context
+import android.util.Log
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import com.example.R
 import com.google.android.gms.tasks.Task
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
+
+private const val TAG = "FirebaseAuthService"
 
 class FirebaseAuthService(private val context: Context) {
 
@@ -33,41 +46,60 @@ class FirebaseAuthService(private val context: Context) {
             null
         }
 
-    suspend fun registerUser(email: String, password: String, displayName: String): Result<String> {
-        val cleanEmail = email.trim().lowercase()
-        return if (isFirebaseConfigured) {
-            try {
-                val auth = FirebaseAuth.getInstance()
-                val authResult = auth.createUserWithEmailAndPassword(cleanEmail, password).awaitTask()
-                val user = authResult.user
-                if (user != null && displayName.isNotBlank()) {
-                    val update = UserProfileChangeRequest.Builder()
-                        .setDisplayName(displayName.trim())
-                        .build()
-                    user.updateProfile(update).awaitTask()
-                }
-                Result.success(user?.uid ?: "uid_${System.currentTimeMillis()}")
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        } else {
-            // Local fallback if google-services.json has not been attached
-            Result.success("local_user_${System.currentTimeMillis()}")
+    fun authStateFlow(): Flow<FirebaseUser?> = callbackFlow {
+        if (!isFirebaseConfigured) {
+            trySend(null)
+            awaitClose {}
+            return@callbackFlow
+        }
+        val auth = FirebaseAuth.getInstance()
+        val listener = FirebaseAuth.AuthStateListener { fbAuth ->
+            trySend(fbAuth.currentUser)
+        }
+        auth.addAuthStateListener(listener)
+        awaitClose {
+            auth.removeAuthStateListener(listener)
         }
     }
 
-    suspend fun loginUser(email: String, password: String): Result<String> {
-        val cleanEmail = email.trim().lowercase()
-        return if (isFirebaseConfigured) {
-            try {
-                val auth = FirebaseAuth.getInstance()
-                val authResult = auth.signInWithEmailAndPassword(cleanEmail, password).awaitTask()
-                Result.success(authResult.user?.uid ?: "uid_${System.currentTimeMillis()}")
-            } catch (e: Exception) {
-                Result.failure(e)
+    suspend fun signInWithGoogle(activityContext: Context): Result<FirebaseUser> {
+        if (!isFirebaseConfigured) {
+            return Result.failure(IllegalStateException("Firebase no está configurado"))
+        }
+
+        return try {
+            val webClientId = context.getString(R.string.default_web_client_id)
+            val credentialManager = CredentialManager.create(activityContext)
+
+            val googleIdOption = GetSignInWithGoogleOption.Builder(webClientId)
+                .build()
+
+            val request = GetCredentialRequest.Builder()
+                .addCredentialOption(googleIdOption)
+                .build()
+
+            val result = credentialManager.getCredential(
+                request = request,
+                context = activityContext
+            )
+
+            val credential = result.credential
+            if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                val idToken = googleIdTokenCredential.idToken
+                val authCredential = GoogleAuthProvider.getCredential(idToken, null)
+                val authResult = FirebaseAuth.getInstance().signInWithCredential(authCredential).awaitTask()
+                val user = authResult.user ?: error("No se pudo obtener el usuario de Firebase")
+                Result.success(user)
+            } else {
+                Result.failure(IllegalArgumentException("Tipo de credencial no reconocido"))
             }
-        } else {
-            Result.success("local_user_${System.currentTimeMillis()}")
+        } catch (e: GetCredentialCancellationException) {
+            Log.w(TAG, "Inicio de sesión con Google cancelado por el usuario", e)
+            Result.failure(e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error durante el inicio de sesión con Google", e)
+            Result.failure(e)
         }
     }
 
@@ -75,7 +107,9 @@ class FirebaseAuthService(private val context: Context) {
         if (isFirebaseConfigured) {
             try {
                 FirebaseAuth.getInstance().signOut()
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al cerrar sesión", e)
+            }
         }
     }
 }

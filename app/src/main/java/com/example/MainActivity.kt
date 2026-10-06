@@ -119,11 +119,8 @@ fun VegasApp(
         Box(modifier = Modifier.fillMaxSize()) {
             AuthScreen(
                 currentCurrency = uiState.currency,
-                onLogin = { email, pass, onFinished ->
-                    viewModel.loginUser(email, pass, onFinished)
-                },
-                onRegister = { email, name, pass, curr, onFinished ->
-                    viewModel.registerUser(email, name, pass, curr, onFinished)
+                onSignInWithGoogle = { activityContext, onFinished ->
+                    viewModel.signInWithGoogle(activityContext, onFinished)
                 },
                 onContinueAsGuest = {
                     viewModel.continueAsGuest()
@@ -493,11 +490,8 @@ fun VegasDashboardScreen(
             currentCurrency = uiState.currency,
             onDismiss = { viewModel.closeAuthDialog() },
             onOpenCurrencyDialog = { viewModel.openCurrencyDialog() },
-            onRegisterUser = { email, name, pass, curr, onFinished ->
-                viewModel.registerUser(email, name, pass, curr, onFinished)
-            },
-            onLoginUser = { email, pass, onFinished ->
-                viewModel.loginUser(email, pass, onFinished)
+            onSignInWithGoogle = { activityContext, onFinished ->
+                viewModel.signInWithGoogle(activityContext, onFinished)
             },
             onLogoutUser = { viewModel.logoutUser() },
             onOpenEmergencyReset = { viewModel.openEmergencyResetDialog() }

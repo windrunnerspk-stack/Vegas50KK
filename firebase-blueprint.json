@@ -1,0 +1,136 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile, currency preferences and bankroll risk management limits",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID matching the document path"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user"
+        },
+        "preferredCurrency": {
+          "type": "string",
+          "description": "Selected fiat or crypto currency code (USD, EUR, COP, MXN, USDT, BTC)"
+        },
+        "vipTier": {
+          "type": "string",
+          "description": "VIP membership status level"
+        },
+        "startingBankroll": {
+          "type": "number",
+          "description": "Baseline initial bankroll"
+        },
+        "weeklyLossLimit": {
+          "type": "number",
+          "description": "Maximum tolerated weekly loss limit"
+        },
+        "weeklyStakeLimit": {
+          "type": "number",
+          "description": "Maximum weekly total staked amount"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp created via FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp created via FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "preferredCurrency", "startingBankroll", "weeklyLossLimit", "weeklyStakeLimit", "createdAt"]
+    },
+    "Bet": {
+      "title": "Bet",
+      "description": "Sports or Casino bet movement record with odds, stakes, and settlement status",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the bet"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["SPORTS", "CASINO"],
+          "description": "Primary gambling category"
+        },
+        "subcategory": {
+          "type": "string",
+          "description": "Specific sport or casino game title"
+        },
+        "eventName": {
+          "type": "string",
+          "description": "Match or table event name"
+        },
+        "market": {
+          "type": "string",
+          "description": "Bet type or market description"
+        },
+        "odds": {
+          "type": "number",
+          "description": "Decimal odds"
+        },
+        "stake": {
+          "type": "number",
+          "description": "Amount staked in user currency"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["WON", "LOST", "PENDING", "REFUNDED"],
+          "description": "Settlement outcome status"
+        },
+        "payout": {
+          "type": "number",
+          "description": "Amount paid out on victory or refund"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional bet notes or strategy strategy reasoning"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Epoch millisecond time for historical and period filtering"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Update server timestamp"
+        }
+      },
+      "required": ["id", "userId", "category", "subcategory", "eventName", "market", "odds", "stake", "status", "payout", "timestamp", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Root user profile document with bankroll limits and currency settings"
+    },
+    "/users/{userId}/bets/{betId}": {
+      "schema": {
+        "$ref": "#/entities/Bet"
+      },
+      "description": "Subcollection of bets and bankroll transactions for each individual user"
+    }
+  }
+}

@@ -34,7 +34,13 @@ class VegasViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val db = AppDatabase.getDatabase(application)
         val firebaseAuth = com.example.data.auth.FirebaseAuthService(application)
-        repository = VegasRepository(db.betDao(), db.riskSettingsDao(), db.userDao(), firebaseAuth)
+        repository = VegasRepository(
+            context = application,
+            betDao = db.betDao(),
+            riskSettingsDao = db.riskSettingsDao(),
+            userDao = db.userDao(),
+            firebaseAuthService = firebaseAuth
+        )
         viewModelScope.launch {
             repository.ensureInitialized()
         }
@@ -350,29 +356,17 @@ class VegasViewModel(application: Application) : AndroidViewModel(application) {
         _isAuthDialogOpen.value = false
     }
 
-    fun registerUser(email: String, name: String, pass: String, curr: String, onFinished: (Boolean, String?) -> Unit) {
+    fun signInWithGoogle(activityContext: android.content.Context, onFinished: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
-            val result = repository.registerUser(email, name, pass, curr)
-            if (result.isSuccess) {
-                _messageSnackbar.value = "¡Bienvenido a Vegas 50k, ${name.ifBlank { email }}!"
-                _isAuthDialogOpen.value = false
-                onFinished(true, null)
-            } else {
-                onFinished(false, result.exceptionOrNull()?.message ?: "Error al registrar")
-            }
-        }
-    }
-
-    fun loginUser(email: String, pass: String, onFinished: (Boolean, String?) -> Unit) {
-        viewModelScope.launch {
-            val result = repository.loginUser(email, pass)
+            val result = repository.signInWithGoogle(activityContext)
             if (result.isSuccess) {
                 val user = result.getOrNull()
-                _messageSnackbar.value = "Sesión iniciada: ${user?.displayName ?: email}"
+                _messageSnackbar.value = "¡Bienvenido a Vegas 50k, ${user?.displayName ?: "Usuario VIP"}!"
                 _isAuthDialogOpen.value = false
                 onFinished(true, null)
             } else {
-                onFinished(false, result.exceptionOrNull()?.message ?: "Error al iniciar sesión")
+                val err = result.exceptionOrNull()?.localizedMessage ?: "Error al autenticar con Google"
+                onFinished(false, err)
             }
         }
     }

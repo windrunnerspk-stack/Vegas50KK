@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.preferredCurrency is string &&
+             data.preferredCurrency.size() <= 10 &&
+             data.startingBankroll is number &&
+             data.startingBankroll >= 0 &&
+             data.weeklyLossLimit is number &&
+             data.weeklyLossLimit >= 0 &&
+             data.weeklyStakeLimit is number &&
+             data.weeklyStakeLimit >= 0 &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+             (!('vipTier' in data) || (data.vipTier is string && data.vipTier.size() <= 50)) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidBet(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.id is string &&
+             data.id.size() <= 128 &&
+             data.category in ['SPORTS', 'CASINO'] &&
+             data.subcategory is string &&
+             data.subcategory.size() <= 60 &&
+             data.eventName is string &&
+             data.eventName.size() <= 150 &&
+             data.market is string &&
+             data.market.size() <= 150 &&
+             data.odds is number &&
+             data.odds >= 1.0 &&
+             data.stake is number &&
+             data.stake >= 0.0 &&
+             data.status in ['WON', 'LOST', 'PENDING', 'REFUNDED'] &&
+             data.payout is number &&
+             data.payout >= 0.0 &&
+             data.timestamp is number &&
+             data.timestamp > 0 &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 500)) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // Root user profile & settings
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidUserProfile(incoming());
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Subcollection of user bets
+      match /bets/{betId} {
+        allow get: if isOwner(userId) && isValidId(betId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(betId) &&
+                         incoming().id == betId &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         isValidBet(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(betId) &&
+                         incoming().id == existing().id &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidBet(incoming(), userId);
+
+        allow delete: if isOwner(userId) && isValidId(betId);
+      }
+    }
+  }
+}
