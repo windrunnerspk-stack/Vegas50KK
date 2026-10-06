@@ -1,0 +1,6 @@
+{
+  "name": "Vegas 50k",
+  "description": "Dashboard de gestión de bankroll y apuestas con control de riesgo, métricas clave y analíticas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
