@@ -99,7 +99,7 @@ jobs:
           fi
 
       - name: Compilar APK Debug con Gradle
-        run: ./gradlew assembleDebug -x lint -x test --stacktrace
+        run: ./gradlew bundleRelease -x lint -x test --stacktrace
 
       - name: Subir APK como artefacto descargable
         uses: actions/upload-artifact@v4
