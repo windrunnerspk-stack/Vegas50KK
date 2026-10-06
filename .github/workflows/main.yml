@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build Release APK
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -51,13 +51,21 @@ jobs:
           chmod +x ./gradlew
           ls -la ./gradlew
 
-      - name: Proveer debug.keystore si falta
+      - name: Proveer keystore de Release si falta
         run: |
-          if [ ! -f "debug.keystore" ]; then
-            echo "debug.keystore no encontrado. Generándolo con keytool para signingConfig 'debugConfig'..."
-            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "Decodificando keystore desde GitHub Secrets..."
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-upload-key.jks
+          elif [ ! -f "my-upload-key.jks" ]; then
+            echo "Generando my-upload-key.jks para firma de Release..."
+            keytool -genkey -v -keystore my-upload-key.jks \
+              -storepass "${{ secrets.STORE_PASSWORD || 'vegas50kpass' }}" \
+              -alias upload \
+              -keypass "${{ secrets.KEY_PASSWORD || 'vegas50kpass' }}" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Vegas 50k,O=Vegas50k,C=US"
           fi
-          ls -la debug.keystore
+          ls -la my-upload-key.jks
 
       - name: Proveer google-services.json si falta
         run: |
@@ -98,13 +106,17 @@ jobs:
           EOF
           fi
 
-      - name: Compilar APK Debug con Gradle
-        run: ./gradlew assembleDebug -x lint -x test --stacktrace
+      - name: Compilar APK Release con Gradle
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD || 'vegas50kpass' }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'vegas50kpass' }}
+        run: ./gradlew assembleRelease -x lint -x test --stacktrace
 
-      - name: Subir APK como artefacto descargable
+      - name: Subir APK Release como artefacto descargable
         uses: actions/upload-artifact@v4
         with:
-          name: Vegas-50k-Debug-APK
-          path: app/build/outputs/apk/**/*.apk
+          name: Vegas-50k-Release-APK
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 14
