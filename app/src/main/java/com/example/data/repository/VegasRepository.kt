@@ -3,7 +3,6 @@ package com.example.data.repository
 import com.example.data.auth.FirebaseAuthService
 import com.example.data.local.BetDao
 import com.example.data.local.BetEntity
-import com.example.data.local.InitialMockData
 import com.example.data.local.RiskSettingsDao
 import com.example.data.local.RiskSettingsEntity
 import com.example.data.local.UserAccountEntity
@@ -22,10 +21,6 @@ class VegasRepository(
     val activeUser: Flow<UserAccountEntity?> = userDao.getActiveUser()
 
     suspend fun ensureInitialized() {
-        val count = betDao.getCount()
-        if (count == 0) {
-            betDao.insertAll(InitialMockData.getSampleBets())
-        }
         val currentSettings = riskSettingsDao.getSettings().firstOrNull()
         if (currentSettings == null) {
             riskSettingsDao.insertOrUpdate(
@@ -35,20 +30,6 @@ class VegasRepository(
                     weeklyLossLimit = 3500.0,
                     weeklyStakeLimit = 9000.0,
                     currencyCode = "USD"
-                )
-            )
-        }
-        val userCount = userDao.getUserCount()
-        if (userCount == 0) {
-            // Seed initial default VIP account for demo readiness
-            userDao.insertUser(
-                UserAccountEntity(
-                    email = "latouchettdiego@gmail.com",
-                    displayName = "Diego Latouchett",
-                    passwordHash = "vegas50k",
-                    preferredCurrency = "USD",
-                    vipTier = "HIGH-ROLLER VIP",
-                    isLoggedIn = false
                 )
             )
         }
@@ -114,7 +95,6 @@ class VegasRepository(
         // 1. Firebase Auth Login
         val fbResult = firebaseAuthService.loginUser(cleanEmail, password)
         if (fbResult.isFailure) {
-            // Check if local demo account matches
             val localUser = userDao.getUserByEmail(cleanEmail)
             if (localUser != null && localUser.passwordHash == password) {
                 userDao.logoutAll()
@@ -151,16 +131,18 @@ class VegasRepository(
         userDao.logoutAll()
     }
 
-    suspend fun resetDemoData() {
+    suspend fun wipeAllData() {
+        // Complete wipe of all bets and reset bankroll
         betDao.deleteAllBets()
-        betDao.insertAll(InitialMockData.getSampleBets())
+        val current = riskSettingsDao.getSettings().firstOrNull()
+        val currCode = current?.currencyCode ?: "USD"
         riskSettingsDao.insertOrUpdate(
             RiskSettingsEntity(
                 id = 1,
                 startingBankroll = 50000.0,
                 weeklyLossLimit = 3500.0,
                 weeklyStakeLimit = 9000.0,
-                currencyCode = "USD"
+                currencyCode = currCode
             )
         )
     }

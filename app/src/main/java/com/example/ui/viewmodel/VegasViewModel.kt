@@ -50,6 +50,7 @@ class VegasViewModel(application: Application) : AndroidViewModel(application) {
     private val _isRiskSettingsOpen = MutableStateFlow(false)
     private val _isCurrencyDialogOpen = MutableStateFlow(false)
     private val _isAuthDialogOpen = MutableStateFlow(false)
+    private val _isEmergencyResetOpen = MutableStateFlow(false)
     private val _isGuestSession = MutableStateFlow(false)
     private val _messageSnackbar = MutableStateFlow<String?>(null)
 
@@ -248,6 +249,8 @@ class VegasViewModel(application: Application) : AndroidViewModel(application) {
         state.copy(isCurrencyDialogOpen = isCurrOpen)
     }.combine(_isAuthDialogOpen) { state, isAuthOpen ->
         state.copy(isAuthDialogOpen = isAuthOpen)
+    }.combine(_isEmergencyResetOpen) { state, isResetOpen ->
+        state.copy(isEmergencyResetOpen = isResetOpen)
     }.combine(_isGuestSession) { state, isGuest ->
         state.copy(isGuestSession = isGuest)
     }.combine(_messageSnackbar) { state, snackbar ->
@@ -473,10 +476,23 @@ class VegasViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun resetDemoData() {
+    fun openEmergencyResetDialog() {
+        _isEmergencyResetOpen.value = true
+    }
+
+    fun closeEmergencyResetDialog() {
+        _isEmergencyResetOpen.value = false
+    }
+
+    fun confirmEmergencyReset() {
         viewModelScope.launch {
-            repository.resetDemoData()
-            _messageSnackbar.value = "Datos de prueba reiniciados"
+            repository.wipeAllData()
+            _selectedPeriod.value = PeriodFilter.THIS_WEEK
+            _selectedCategory.value = CategoryFilter.ALL
+            _selectedStatus.value = StatusFilter.ALL
+            _searchQuery.value = ""
+            _isEmergencyResetOpen.value = false
+            _messageSnackbar.value = "⚠️ Todos los datos han sido borrados permanentemente. Base de datos reiniciada a cero."
         }
     }
 

@@ -65,6 +65,7 @@ import com.example.ui.components.BankrollChart
 import com.example.ui.components.BetItemCard
 import com.example.ui.components.CategoryComparison
 import com.example.ui.components.CurrencySelectorDialog
+import com.example.ui.components.EmergencyResetDialog
 import com.example.ui.components.KpiMetricsGrid
 import com.example.ui.components.RiskControlMeter
 import com.example.ui.components.RiskSettingsDialog
@@ -208,7 +209,7 @@ fun VegasDashboardScreen(
                         onOpenRiskSettings = { viewModel.openRiskSettings() },
                         onOpenCurrencySelector = { viewModel.openCurrencyDialog() },
                         onOpenAuthProfile = { viewModel.openAuthDialog() },
-                        onResetDemoData = { viewModel.resetDemoData() }
+                        onOpenEmergencyReset = { viewModel.openEmergencyResetDialog() }
                     )
                 }
 
@@ -498,7 +499,16 @@ fun VegasDashboardScreen(
             onLoginUser = { email, pass, onFinished ->
                 viewModel.loginUser(email, pass, onFinished)
             },
-            onLogoutUser = { viewModel.logoutUser() }
+            onLogoutUser = { viewModel.logoutUser() },
+            onOpenEmergencyReset = { viewModel.openEmergencyResetDialog() }
+        )
+    }
+
+    // Emergency Reset Dialog (Ventana de Emergencia)
+    if (uiState.isEmergencyResetOpen) {
+        EmergencyResetDialog(
+            onDismiss = { viewModel.closeEmergencyResetDialog() },
+            onConfirmReset = { viewModel.confirmEmergencyReset() }
         )
     }
 }

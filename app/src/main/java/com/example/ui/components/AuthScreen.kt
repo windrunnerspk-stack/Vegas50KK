@@ -94,8 +94,8 @@ fun AuthScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
 
     // Login state
-    var loginEmail by remember { mutableStateOf("latouchettdiego@gmail.com") }
-    var loginPassword by remember { mutableStateOf("vegas50k") }
+    var loginEmail by remember { mutableStateOf("") }
+    var loginPassword by remember { mutableStateOf("") }
     var loginPasswordVisible by remember { mutableStateOf(false) }
 
     // Register state

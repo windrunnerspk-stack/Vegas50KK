@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Tune
@@ -69,7 +70,7 @@ fun VegasHeader(
     onOpenRiskSettings: () -> Unit,
     onOpenCurrencySelector: () -> Unit,
     onOpenAuthProfile: () -> Unit,
-    onResetDemoData: () -> Unit,
+    onOpenEmergencyReset: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -232,19 +233,19 @@ fun VegasHeader(
                 Spacer(modifier = Modifier.width(6.dp))
 
                 IconButton(
-                    onClick = onResetDemoData,
+                    onClick = onOpenEmergencyReset,
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
-                        .background(VegasSurfaceElevated)
-                        .border(1.dp, VegasBorder, CircleShape)
-                        .testTag("reset_demo_button")
+                        .background(Color(0xFF2B0F13))
+                        .border(1.dp, VegasCrimson.copy(alpha = 0.7f), CircleShape)
+                        .testTag("emergency_reset_button")
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Restablecer datos demo",
-                        tint = VegasTextSecondary,
-                        modifier = Modifier.size(16.dp)
+                        imageVector = Icons.Default.DeleteForever,
+                        contentDescription = "Reinicio de emergencia (Borrar todo)",
+                        tint = VegasCrimson,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }

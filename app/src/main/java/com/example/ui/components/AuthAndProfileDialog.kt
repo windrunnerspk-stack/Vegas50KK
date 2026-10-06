@@ -80,7 +80,8 @@ fun AuthAndProfileDialog(
     onOpenCurrencyDialog: () -> Unit,
     onRegisterUser: (email: String, name: String, pass: String, curr: String, onFinished: (Boolean, String?) -> Unit) -> Unit,
     onLoginUser: (email: String, pass: String, onFinished: (Boolean, String?) -> Unit) -> Unit,
-    onLogoutUser: () -> Unit
+    onLogoutUser: () -> Unit,
+    onOpenEmergencyReset: (() -> Unit)? = null
 ) {
     // 0 = Register, 1 = Login
     var authTab by remember { mutableIntStateOf(0) }
@@ -89,8 +90,8 @@ fun AuthAndProfileDialog(
     var regPassword by remember { mutableStateOf("") }
     var regCurrency by remember { mutableStateOf(currentCurrency.code) }
 
-    var logEmail by remember { mutableStateOf("latouchettdiego@gmail.com") }
-    var logPassword by remember { mutableStateOf("vegas50k") }
+    var logEmail by remember { mutableStateOf("") }
+    var logPassword by remember { mutableStateOf("") }
 
     var isSubmitting by remember { mutableStateOf(false) }
     var authError by remember { mutableStateOf<String?>(null) }
@@ -300,6 +301,27 @@ fun AuthAndProfileDialog(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = VegasCrimson)
                     ) {
                         Text("Cerrar Sesión / Cambiar de Usuario", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    if (onOpenEmergencyReset != null) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Button(
+                            onClick = {
+                                onDismiss()
+                                onOpenEmergencyReset()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF381014),
+                                contentColor = Color(0xFFFF6B6B)
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, VegasCrimson.copy(alpha = 0.6f))
+                        ) {
+                            Text("Reinicio de Emergencia (Borrar Todo)", fontSize = 12.sp, fontWeight = FontWeight.Black)
+                        }
                     }
 
                 } else {

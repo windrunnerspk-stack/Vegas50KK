@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [BetEntity::class, RiskSettingsEntity::class, UserAccountEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,10 +34,9 @@ abstract class AppDatabase : RoomDatabase() {
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            // Preload with realistic initial data
+                            // Initialize clean production configuration without test/mock bets
                             CoroutineScope(Dispatchers.IO).launch {
                                 INSTANCE?.let { database ->
-                                    database.betDao().insertAll(InitialMockData.getSampleBets())
                                     database.riskSettingsDao().insertOrUpdate(
                                         RiskSettingsEntity(
                                             id = 1,
@@ -45,16 +44,6 @@ abstract class AppDatabase : RoomDatabase() {
                                             weeklyLossLimit = 3500.0,
                                             weeklyStakeLimit = 9000.0,
                                             currencyCode = "USD"
-                                        )
-                                    )
-                                    database.userDao().insertUser(
-                                        UserAccountEntity(
-                                            email = "latouchettdiego@gmail.com",
-                                            displayName = "Diego Latouchett",
-                                            passwordHash = "vegas50k",
-                                            preferredCurrency = "USD",
-                                            vipTier = "HIGH-ROLLER VIP",
-                                            isLoggedIn = true
                                         )
                                     )
                                 }

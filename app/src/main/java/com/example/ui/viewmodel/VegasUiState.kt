@@ -93,6 +93,7 @@ data class VegasUiState(
     val isRiskSettingsOpen: Boolean = false,
     val isCurrencyDialogOpen: Boolean = false,
     val isAuthDialogOpen: Boolean = false,
+    val isEmergencyResetOpen: Boolean = false,
     val isGuestSession: Boolean = false,
     val messageSnackbar: String? = null
 )

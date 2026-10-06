@@ -53,23 +53,9 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `initial mock data contains diverse bets`() {
+    fun `initial mock data returns empty list in production`() {
         val bets = InitialMockData.getSampleBets()
-        assertTrue("Mock bets should not be empty", bets.isNotEmpty())
-
-        val sportsBets = bets.filter { it.category == "SPORTS" }
-        val casinoBets = bets.filter { it.category == "CASINO" }
-
-        assertTrue("Should have sports bets", sportsBets.isNotEmpty())
-        assertTrue("Should have casino bets", casinoBets.isNotEmpty())
-
-        val wonBets = bets.filter { it.status == "WON" }
-        val lostBets = bets.filter { it.status == "LOST" }
-        val pendingBets = bets.filter { it.status == "PENDING" }
-
-        assertTrue("Should have won bets", wonBets.isNotEmpty())
-        assertTrue("Should have lost bets", lostBets.isNotEmpty())
-        assertTrue("Should have pending bets", pendingBets.isNotEmpty())
+        assertTrue("In production there should be zero mock bets", bets.isEmpty())
     }
 
     @Test

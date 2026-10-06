@@ -91,8 +91,8 @@ fun AddEditBetSheet(
     }
     var eventName by remember { mutableStateOf(betToEdit?.eventName ?: "") }
     var market by remember { mutableStateOf(betToEdit?.market ?: "") }
-    var oddsStr by remember { mutableStateOf(betToEdit?.odds?.toString() ?: "2.00") }
-    var stakeStr by remember { mutableStateOf(betToEdit?.stake?.let { String.format(Locale.US, "%.0f", it) } ?: "250") }
+    var oddsStr by remember { mutableStateOf(betToEdit?.odds?.toString() ?: "") }
+    var stakeStr by remember { mutableStateOf(betToEdit?.stake?.let { String.format(Locale.US, "%.0f", it) } ?: "") }
     var status by remember { mutableStateOf(betToEdit?.status ?: "PENDING") }
     var customPayoutStr by remember { mutableStateOf(betToEdit?.payout?.let { String.format(Locale.US, "%.2f", it) } ?: "") }
     var notes by remember { mutableStateOf(betToEdit?.notes ?: "") }
