@@ -96,16 +96,24 @@ class FirebaseAuthService(private val context: Context) {
                 val user = authResult.user ?: error("No se pudo obtener el usuario de Firebase")
                 Result.success(user)
             } else {
-                Result.failure(IllegalArgumentException("Tipo de credencial no reconocido"))
+                Result.failure(IllegalArgumentException("Tipo de credencial no reconocido: ${credential.type}"))
             }
         } catch (e: GetCredentialCancellationException) {
-            Log.w(TAG, "Inicio de sesión con Google cancelado por el usuario", e)
-            Result.failure(Exception("Inicio de sesión cancelado"))
+            val detail = e.message ?: ""
+            Log.w(TAG, "Cancelación o fallo en Credential Manager: $detail", e)
+            val friendlyMsg = if (detail.contains("reauth", ignoreCase = true) || detail.contains("16")) {
+                "Error [16] de autorización de cuenta. La clave de firma del APK en tu teléfono no coincide con la registrada en Firebase."
+            } else {
+                "Inicio de sesión cancelado"
+            }
+            Result.failure(Exception(friendlyMsg, e))
         } catch (e: Exception) {
             Log.e(TAG, "Error durante el inicio de sesión con Google", e)
             val rawMsg = e.localizedMessage ?: "Error de autenticación con Google"
             val friendlyMsg = if (rawMsg.contains("reauth", ignoreCase = true) || rawMsg.contains("16")) {
-                "Error de autorización de cuenta Google [16]. La aplicación debe estar firmada con el certificado registrado en Firebase."
+                "Error [16] de autorización de cuenta. La clave de firma del APK en tu teléfono no coincide con la registrada en Firebase."
+            } else if (rawMsg.contains("network", ignoreCase = true)) {
+                "Error de conexión a internet. Verifica tu conexión y vuelve a intentarlo."
             } else {
                 rawMsg
             }

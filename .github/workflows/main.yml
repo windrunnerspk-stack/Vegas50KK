@@ -56,27 +56,15 @@ jobs:
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
             echo "Decodificando keystore desde GitHub Secrets..."
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-upload-key.jks
-          elif [ -f "debug.keystore.base64" ]; then
-            echo "Restaurando keystore registrado en Firebase..."
-            base64 -d debug.keystore.base64 > debug.keystore
-            keytool -importkeystore \
-              -srckeystore debug.keystore -srcstorepass android -srcalias androiddebugkey \
-              -destkeystore my-upload-key.jks -deststorepass android -destalias upload -destkeypass android \
-              -noprompt
-          elif [ -f "debug.keystore" ]; then
-            echo "Importando clave desde debug.keystore..."
-            keytool -importkeystore \
-              -srckeystore debug.keystore -srcstorepass android -srcalias androiddebugkey \
-              -destkeystore my-upload-key.jks -deststorepass android -destalias upload -destkeypass android \
-              -noprompt
           else
-            echo "Generando keystore..."
-            keytool -genkey -v -keystore my-upload-key.jks \
-              -storepass android \
-              -alias upload \
-              -keypass android \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=Vegas 50k,O=Vegas50k,C=US"
+            echo "Restaurando keystore registrado en Firebase..."
+            cat << 'EOF' | base64 -d > debug.keystore
+          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
+          EOF
+            keytool -importkeystore \
+              -srckeystore debug.keystore -srcstorepass android -srcalias androiddebugkey \
+              -destkeystore my-upload-key.jks -deststorepass android -destalias upload -destkeypass android \
+              -noprompt
           fi
           ls -la my-upload-key.jks
           echo "SHA-1 del certificado firmado:"
@@ -121,12 +109,12 @@ jobs:
           EOF
           fi
 
-      - name: Compilar APK Release con Gradle
+      - name: Compilar APKs con Gradle
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD || 'android' }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'android' }}
-        run: ./gradlew assembleRelease -x lint -x test --stacktrace
+        run: ./gradlew assembleRelease assembleDebug -x lint -x test --stacktrace
 
       - name: Subir APK Release como artefacto descargable
         uses: actions/upload-artifact@v4
@@ -134,4 +122,12 @@ jobs:
           name: Vegas-50k-Release-APK
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Subir APK Debug como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vegas-50k-Debug-APK
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: ignore
           retention-days: 14
